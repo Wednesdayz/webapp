@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<!-- <h1 class="centerme">User Profile</h1> -->
+<div class="spacer"></div>
+<div class="row">
+<div class="col-md-4 col-md-offset-1">
+
+<div class="spacer"></div>
+<h3>My Account</h3>
+
+<p>{{ customer.first_name }} {{ customer.last_name }}<br>
+{{ customer.email }}<br>
+</p>
+
+</div>
+<div class="col-md-6">
+
+<table class="table table-hover">
+    <tr>
+        <th>Order #</th>
+        <th>Date</th>
+        <th>Total</th>
+    </tr>
+
+{% for order in customer.orders %}
+
+    <tr>
+        <td>{{ order.order_id }}</td>
+        <td>{{ order.placed_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ "$%.2f"|format(order.total) }}</td>
+    </tr>
+
+{% endfor %}
+
+</table>
+
+<small>Questions about your order? Contact customer service at ######## and reference your order number.</small>
+
+</div>
+
+
+{% endblock %}
