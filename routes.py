@@ -40,7 +40,7 @@ def process_login():
         session['email'] = email
         if session.get('email'):
             flash("Login successful!")
-            return redirect("/homepage.html")
+            return redirect("/")
         else:
             return "CookieFail"
 
@@ -114,6 +114,29 @@ def show_search_results():
     products = db.session.query(Product).filter(Product.name.like('%' + terms + '%')).all()
 
     return render_template("products.html", products=products, categories=categories)
+
+@app.route('/products', methods=["POST"])
+def add_products_to_cart():
+    """Add product to cart from button click"""
+
+    product_id = int(request.form.get("productId"))  # this can be wrapped in a func to DRY up code
+    product = Product.query.get(product_id)
+    session["cart"] = session.get("cart", {})
+    # session["cart_total"] = session.get("cart_total", 0) + product.price
+    session["cart"][product_id] = session["cart"].get(product_id, 0) + 1
+
+    cart = session["cart"]
+    print(cart)
+
+    return redirect("/products")
+
+@app.route('/products/<int:product_id>')  # takes product_id as an INTEGER
+def show_product_page(product_id):
+    """Query database for product info and display results"""
+
+    product = Product.query.get(product_id)
+
+    return render_template("product_page.html", product=product)
 
 
 @app.errorhandler(404)
