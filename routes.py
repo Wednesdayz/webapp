@@ -2,7 +2,7 @@ from order import Orders, PiggyBackOrder
 from Item import Item, food, meal, drinks
 from flask import Flask, render_template, redirect, request, flash, abort, session, jsonify
 from jinja2 import StrictUndefined
-from model import connect_to_db, db, Customer, Location, Product
+from model import connect_to_db, db, Customer, Location, Product, Icon
 
 app = Flask(__name__)
 app.secret_key = 'Bbklct321'
@@ -57,7 +57,7 @@ def process_logout():
 
     flash("You have been logged out.")
 
-    return redirect("/homepage.html")
+    return redirect("/")
 
 @app.route('/register')
 def show_register():
@@ -103,6 +103,26 @@ def filter_products():
 
     return render_template("filter.html")
 
+app.route('/filters.json')
+def serve_filtered_products_json():
+    """Query database for product list & display results"""
+
+    filters = request.args.getlist("filters")
+    if filters:
+        prods = db.session.query(Product).filter(Product.category.in_(filters)).order_by(Product.category).all()
+    else:
+        prods = db.session.query(Product).all()
+
+    categories = db.session.query(Product.category).group_by(Product.category).all()
+    products = {}
+    for prod in prods:
+        products[prod.product_id] = {"name": prod.name, "id": prod.product_id, "price": prod.price, "img": prod.img, "weight": prod.weight, "unit": prod.unit}
+        # if prod.icon_id:
+        #     products[prod.product_id]["icon"] = prod.icon.url
+
+    return jsonify(**{"products": products, "categories": categories})
+
+
 
 @app.route('/search')
 def show_search_results():
@@ -130,6 +150,7 @@ def add_products_to_cart():
 
     return redirect("/products")
 
+
 @app.route('/products/<int:product_id>')  # takes product_id as an INTEGER
 def show_product_page(product_id):
     """Query database for product info and display results"""
@@ -137,6 +158,21 @@ def show_product_page(product_id):
     product = Product.query.get(product_id)
 
     return render_template("product_page.html", product=product)
+
+@app.route('/locations')
+def show_locations():
+    """Show local pickup locations"""
+
+    locations = db.session.query(Location).all()
+
+    return render_template("locations.html", locations=locations)
+
+@app.route('/cart')
+def show_cart():
+    """Query session for cart contents and display results"""
+
+    return render_template("cart.html")
+
 
 
 @app.errorhandler(404)
