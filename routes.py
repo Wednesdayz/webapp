@@ -96,6 +96,7 @@ def show_account():
     customer = db.session.query(Customer).filter(Customer.email == session['email']).one()
 
     return render_template("account.html", customer=customer)
+
     
 @app.route('/products')
 def filter_products():
@@ -103,7 +104,18 @@ def filter_products():
 
     return render_template("filter.html")
 
-app.route('/filters.json')
+@app.route('/search')
+def show_search_results():
+    """Query database for search results"""
+
+    terms = request.args.get("terms").title()
+
+    categories = db.session.query(Product.category).group_by(Product.category).all()
+    products = db.session.query(Product).filter(Product.name.like('%' + terms + '%')).all()
+
+    return render_template("products.html", products=products, categories=categories)
+
+@app.route('/filters.json')
 def serve_filtered_products_json():
     """Query database for product list & display results"""
 
@@ -121,19 +133,6 @@ def serve_filtered_products_json():
         #     products[prod.product_id]["icon"] = prod.icon.url
 
     return jsonify(**{"products": products, "categories": categories})
-
-
-
-@app.route('/search')
-def show_search_results():
-    """Query database for search results"""
-
-    terms = request.args.get("terms").title()
-
-    categories = db.session.query(Product.category).group_by(Product.category).all()
-    products = db.session.query(Product).filter(Product.name.like('%' + terms + '%')).all()
-
-    return render_template("products.html", products=products, categories=categories)
 
 @app.route('/products', methods=["POST"])
 def add_products_to_cart():
@@ -159,6 +158,21 @@ def show_product_page(product_id):
 
     return render_template("product_page.html", product=product)
 
+
+@app.route('/products/<int:product_id>', methods=["POST"])  # takes product_id as an INTEGER
+def add_product_to_cart(product_id):
+    """Add product to cart from button click on prod page"""
+
+    product_id = int(request.form.get("productId"))
+
+    session["cart"] = session.get("cart", {})
+    # session["cart_total"] = session.get("cart_total", 0) + product.price
+    session["cart"][product_id] = session["cart"].get(product_id, 0) + 1
+
+    cart = session["cart"]
+
+    return redirect('/products/' + str(product_id))
+
 @app.route('/locations')
 def show_locations():
     """Show local pickup locations"""
@@ -173,6 +187,76 @@ def show_cart():
 
     return render_template("cart.html")
 
+@app.route('/add-item', methods=['POST'])
+def add_to_cart_from_ng():
+    """Update cart from Angular AJAX Post"""
+
+    session['cart'] = session.get('cart', {})
+    product_id = request.json.get('product_id')
+    session['cart'][int(product_id)] = session['cart'].get(int(product_id), 0) + 1
+    session.modified = True
+
+    if int(product_id):
+        return "Success!"
+    else:
+        return "Missing product id"
+
+def update_cart_from_ng():
+    """Update cart from dropdowns on cart page"""
+    print(session['cart'])
+    product_id = request.json.get('product_id')
+    qty = request.json.get('qty')
+    print(product_id)
+    print(qty)
+
+    if product_id and qty:
+        session['cart'][int(product_id)] = int(qty)
+        session.modified = True
+        print(session['cart'])
+        return "Success"
+    else:
+        return "Missing parameters"
+
+@app.route('/delete-product', methods=['POST'])
+def delete_from_cart():
+    """Delete item from cart"""
+
+    product_id = request.json.get('product_id')
+    print(session['cart'])
+
+    if product_id:
+        del session['cart'][int(product_id)]
+        session.modified = True
+        print(session['cart'])
+        return "Success"
+    else:
+        return "Missing product_id"
+
+
+@app.route('/cart.json')
+def get_cart_json():
+    """Gets product info from database and returns in json"""
+
+    result_objects = db.session.query(Product).filter(Product.product_id.in_(session["cart"].keys())).all()
+    result = {"contents": [], "cart": {}}
+
+    for product_obj in result_objects:
+        result["cart"][product_obj.product_id] = {"name": product_obj.name,
+                                                  "qty": session["cart"][product_obj.product_id],
+                                                  "description": product_obj.description,
+                                                  "weight": product_obj.weight,
+                                                  "unit": product_obj.unit,
+                                                  "price": product_obj.price,
+                                                  "price_per": product_obj.price_per,
+                                                  "per_unit": product_obj.per_unit,
+                                                  "product_id": product_obj.product_id,
+                                                  "icon": None}
+        if product_obj.icon_id:
+            result["cart"][product_obj.product_id]["icon"] = product_obj.icon.url
+        result["contents"].append(str(product_obj.product_id))
+
+    return jsonify(**result)
+
 
 
 @app.errorhandler(404)
@@ -185,7 +269,6 @@ if __name__ == "__main__":
     # Change app.debug to False before launch
     app.debug = True
     connect_to_db(app)
-
     # Use the DebugToolbar
     # DebugToolbarExtension(app)
 
