@@ -3,6 +3,8 @@ from Item import Item, food, meal, drinks
 from flask import Flask, render_template, redirect, request, flash, abort, session, jsonify
 from jinja2 import StrictUndefined
 from model import connect_to_db, db, Customer, Location, Product, Icon
+import api
+from math import floor
 
 app = Flask(__name__)
 app.secret_key = 'Bbklct321'
@@ -138,14 +140,14 @@ def serve_filtered_products_json():
 def add_products_to_cart():
     """Add product to cart from button click"""
 
-    product_id = int(request.form.get("productId"))  # this can be wrapped in a func to DRY up code
-    product = Product.query.get(product_id)
+    product_id = request.form.get("productId")  # this can be wrapped in a func to DRY up code
+    product = Product.query.get(int(product_id))
     session["cart"] = session.get("cart", {})
     # session["cart_total"] = session.get("cart_total", 0) + product.price
-    session["cart"][product_id] = session["cart"].get(product_id, 0) + 1
+    session["cart"][product_id] = int(session["cart"].get(product_id, 0)) + 1
 
     cart = session["cart"]
-    print(cart)
+    print(cart)                 
 
     return redirect("/products")
 
@@ -167,9 +169,10 @@ def add_product_to_cart(product_id):
 
     session["cart"] = session.get("cart", {})
     # session["cart_total"] = session.get("cart_total", 0) + product.price
-    session["cart"][product_id] = session["cart"].get(product_id, 0) + 1
+    session["cart"][product_id] = int(session["cart"].get(product_id, 0)) + 1
 
     cart = session["cart"]
+    print(cart)
 
     return redirect('/products/' + str(product_id))
 
@@ -192,17 +195,25 @@ def add_to_cart_from_ng():
     """Update cart from Angular AJAX Post"""
 
     session['cart'] = session.get('cart', {})
+    print(session['cart'])
     product_id = request.json.get('product_id')
+    print(session['cart'].get(int(product_id), 0) + 1)
     session['cart'][int(product_id)] = session['cart'].get(int(product_id), 0) + 1
     session.modified = True
+    print(session['cart'])
+    print(session['cart'][int(product_id)])
 
     if int(product_id):
         return "Success!"
     else:
         return "Missing product id"
 
+
+
+@app.route('/update-cart', methods=['POST'])
 def update_cart_from_ng():
     """Update cart from dropdowns on cart page"""
+
     print(session['cart'])
     product_id = request.json.get('product_id')
     qty = request.json.get('qty')
@@ -217,17 +228,16 @@ def update_cart_from_ng():
     else:
         return "Missing parameters"
 
+
 @app.route('/delete-product', methods=['POST'])
 def delete_from_cart():
     """Delete item from cart"""
-
     product_id = request.json.get('product_id')
-    print(session['cart'])
+
 
     if product_id:
-        del session['cart'][int(product_id)]
+        del session['cart'][str(product_id)]
         session.modified = True
-        print(session['cart'])
         return "Success"
     else:
         return "Missing product_id"
@@ -236,13 +246,15 @@ def delete_from_cart():
 @app.route('/cart.json')
 def get_cart_json():
     """Gets product info from database and returns in json"""
-
+    
     result_objects = db.session.query(Product).filter(Product.product_id.in_(session["cart"].keys())).all()
     result = {"contents": [], "cart": {}}
+    print(result)
 
     for product_obj in result_objects:
+        print(session["cart"])
         result["cart"][product_obj.product_id] = {"name": product_obj.name,
-                                                  "qty": session["cart"][product_obj.product_id],
+                                                  "qty": session["cart"][str(product_obj.product_id)],
                                                   "description": product_obj.description,
                                                   "weight": product_obj.weight,
                                                   "unit": product_obj.unit,
@@ -251,11 +263,21 @@ def get_cart_json():
                                                   "per_unit": product_obj.per_unit,
                                                   "product_id": product_obj.product_id,
                                                   "icon": None}
+        print(result)
         if product_obj.icon_id:
             result["cart"][product_obj.product_id]["icon"] = product_obj.icon.url
         result["contents"].append(str(product_obj.product_id))
 
     return jsonify(**result)
+
+@app.route('/checkout')
+def check_out():
+    """Check out"""
+
+    cart = Product.query.filter(Product.product_id.in_(session['cart'].keys())).all()
+
+
+    return render_template("checkout.html", cart=cart)
 
 
 
