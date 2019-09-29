@@ -2,7 +2,7 @@
 
 {% block body %}
 
-<div class="row">
+<!-- <div class="row">
     <div class="nofilters"><a class="showfilters">Filter by Category</a></div>
     <div class="filters hidden">
         {% for category in categories %}
@@ -10,7 +10,7 @@
         {% endfor %}
         <a class="hidefilters">Hide Filters</a>
     </div>
-</div>
+</div> -->
 
 {% if products %}
 
@@ -26,8 +26,8 @@
         <a href="/products/{{ product.product_id }}"><img src="{{ product.img }}"></a>
         <h2 class="imageqty hidden">+</h2>
         <h4>{{ product.name }}</h4>
-        <div class="proddetails"><p>${{ product.price }} <span class="spacerbull">&bull;</span> </div>
-        <button type="button" class="add_to_cart prod_page btn btn-default" id="{{ product.product_id }}">Add to Cart</button>
+        <div class="proddetails"><p>${{ product.price }} <span class="spacerbull">&bull;</span> {{ product.weight }} {{ product.unit }}</div>
+        <button type="button" class="add_to_cart prod_page  btn btn-default" id="{{ product.product_id }}">Add to Cart</button>
     </div>
 
 {# {% elif loop.index0 % 3 == 1 %} #}
@@ -63,6 +63,7 @@
 <script type="text/javascript" src="static/js/cart.js"></script>
 
 <div class="row">
+    <script type="text/javascript" src="static/js/products.js"></script>
     <a href="/products" class="backtoall">Back to All Products</a>
 </div>
 

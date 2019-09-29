@@ -22,7 +22,7 @@
         <h2 class="imageqty hidden">+</h2>
         </div>
         <h4>{{ product.name }}</h4>
-        <div class="proddetails"><p>{{ product.price | currency }} <span class="spacerbull">&bull;</span> </div>
+        <div class="proddetails"><p>{{ product.price | currency }} <span class="spacerbull">&bull;</span> {{ product.weight }} {{ product.unit }}</div>
         <!-- <div class="col-xs-6"><p>Price: {{ product.price | currency }}</p></div> -->
         <button type="button" class="add_to_cart prod_page btn btn-default" ng-click="addToCart(product.id)">Add to Cart</button>
     </div>
