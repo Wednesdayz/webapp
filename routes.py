@@ -5,6 +5,7 @@ from jinja2 import StrictUndefined
 from model import connect_to_db, db, Customer, Location, Product, Icon
 import api
 from math import floor
+import functions
 
 app = Flask(__name__)
 app.secret_key = 'Bbklct321'
@@ -76,9 +77,12 @@ def process_registration():
     email = request.form.get("email")
     password = request.form.get("password")
     phone = request.form.get("phone")
+    street_address = request.form.get("street_address")
+    zipcode = request.form.get("zipcode")
+    state = request.form.get("state")
     country = request.form.get("country")
 
-    user = Customer(first_name=first_name, last_name=last_name, email=email, password_hash=password, phone=phone, country=country)
+    user = Customer(first_name=first_name, last_name=last_name, email=email, password_hash=password, phone=phone,street_address=street_address, zipcode=zipcode, state=state, country=country)
     
     db.session.add(user)
     db.session.commit()
@@ -114,6 +118,7 @@ def show_search_results():
 
     categories = db.session.query(Product.category).group_by(Product.category).all()
     products = db.session.query(Product).filter(Product.name.like('%' + terms + '%')).all()
+    print(products)
 
     return render_template("products.html", products=products, categories=categories)
 
@@ -165,7 +170,7 @@ def show_product_page(product_id):
 def add_product_to_cart(product_id):
     """Add product to cart from button click on prod page"""
 
-    product_id = int(request.form.get("productId"))
+    product_id = request.form.get("productId")
 
     session["cart"] = session.get("cart", {})
     # session["cart_total"] = session.get("cart_total", 0) + product.price
@@ -195,19 +200,14 @@ def add_to_cart_from_ng():
     """Update cart from Angular AJAX Post"""
 
     session['cart'] = session.get('cart', {})
-    print(session['cart'])
     product_id = request.json.get('product_id')
-    print(session['cart'].get(int(product_id), 0) + 1)
-    session['cart'][int(product_id)] = session['cart'].get(int(product_id), 0) + 1
+    session['cart'][str(product_id)] = session['cart'].get(str(product_id), 0) + 1
     session.modified = True
-    print(session['cart'])
-    print(session['cart'][int(product_id)])
 
-    if int(product_id):
+    if product_id:
         return "Success!"
     else:
         return "Missing product id"
-
 
 
 @app.route('/update-cart', methods=['POST'])
@@ -215,18 +215,38 @@ def update_cart_from_ng():
     """Update cart from dropdowns on cart page"""
 
     print(session['cart'])
-    product_id = request.json.get('product_id')
-    qty = request.json.get('qty')
+    product_id = int(request.json.get('product_id'))
+    qty = int(request.json.get('qty'))
     print(product_id)
     print(qty)
 
     if product_id and qty:
-        session['cart'][int(product_id)] = int(qty)
+        session['cart'][str(product_id)] = qty
         session.modified = True
         print(session['cart'])
         return "Success"
     else:
         return "Missing parameters"
+
+@app.route('/cart', methods=['POST'])
+def update_cart():
+    """Process delivery options"""
+
+    delivery_type = request.json.get("delivery")
+    big_address = request.json.get("address")
+    street_address = big_address["street"]
+    zipcode = big_address["zipcode"]
+    print(delivery_type, " is the delivery_type")
+    print(street_address, " is the street_address")
+    print(zipcode, " is the zipcode")
+
+    if delivery_type and street_address and zipcode:
+        session['delivery'] = {'delivery': delivery_type, 'address': street_address, 'zipcode': zipcode}
+        print(session['delivery'])
+        print(session['cart'])
+        return "Success"
+    else:
+        return "Fail"
 
 
 @app.route('/delete-product', methods=['POST'])
@@ -270,14 +290,58 @@ def get_cart_json():
 
     return jsonify(**result)
 
+@app.route('/customer.json')
+def get_customer_json():
+    """Get customer info from database and return in json"""
+
+    #throws an error if customer not logged in!
+
+    if 'email' in session:
+
+        customer = db.session.query(Customer).filter(Customer.email == session['email']).first()
+
+        return jsonify(customer_id=customer.user_id, email=customer.email)
+    else:
+
+        return jsonify(customer_id=None, email=None)
+
+@app.route('/locations.json')
+def get_locations_json():
+    """Provide JSON for pickup locations"""
+
+    locations_json = {"locations": {}, "ids": []}
+    locations = Location.query.filter(Location.vendor_id > 0).all()
+
+    for location in locations:
+        locations_json["locations"][location.name] = {"id": location.vendor_id,
+                                                 "name": location.name,
+                                                 "description": location.description,
+                                                 "address": location.street_address,
+                                                 "zipcode": location.zipcode}
+        locations_json["ids"].append(location.name)
+
+    return jsonify(**locations_json)
+
+
 @app.route('/checkout')
 def check_out():
     """Check out"""
 
     cart = Product.query.filter(Product.product_id.in_(session['cart'].keys())).all()
-
+    functions.get_cart_total(cart)
 
     return render_template("checkout.html", cart=cart)
+
+@app.route('/checkout', methods=['POST'])
+def process_payment():
+    """Process payment"""
+
+    cart = Product.query.filter(Product.product_id.in_(session['cart'].keys())).all()
+    functions.get_cart_total(cart)
+
+    api.pay_for_cart()
+
+    return render_template("success.html")
 
 
 
