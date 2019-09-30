@@ -2,10 +2,11 @@ from order import Orders, PiggyBackOrder
 from Item import Item, food, meal, drinks
 from flask import Flask, render_template, redirect, request, flash, abort, session, jsonify
 from jinja2 import StrictUndefined
-from model import connect_to_db, db, Customer, Location, Product, Icon
+from model import *
 import api
 from math import floor
 import functions
+from passlib.hash import pbkdf2_sha256
 
 app = Flask(__name__)
 app.secret_key = 'Bbklct321'
@@ -38,12 +39,12 @@ def process_login():
 
     user = db.session.query(Customer).filter(Customer.email == email).first()
 
-    if user and password == user.password_hash:
+    if user and pbkdf2_sha256.verify(password, user.password_hash):
 
         session['email'] = email
         if session.get('email'):
             flash("Login successful!")
-            return redirect("/")
+            return "Success"
         else:
             return "CookieFail"
 
@@ -68,6 +69,12 @@ def show_register():
 
     return render_template("register.html")
 
+@app.route('/forgot_password')
+def show_forgot_password():
+    """Show forgot password form"""
+
+    return render_template("forgot_password.html")
+
 @app.route('/register', methods=['POST'])
 def process_registration():
     """Process user registration"""
@@ -76,6 +83,7 @@ def process_registration():
     last_name = request.form.get("last_name")
     email = request.form.get("email")
     password = request.form.get("password")
+    password = pbkdf2_sha256.encrypt(password, rounds=20000, salt_size=16)
     phone = request.form.get("phone")
     street_address = request.form.get("street_address")
     zipcode = request.form.get("zipcode")
@@ -99,7 +107,7 @@ def process_registration():
 def show_account():
     """Show user's info, past orders"""
 
-    customer = db.session.query(Customer).filter(Customer.email == session['email']).one()
+    customer = db.session.query(Customer).filter(Customer.email == session['email']).one()  
 
     return render_template("account.html", customer=customer)
 
@@ -185,9 +193,9 @@ def add_product_to_cart(product_id):
 def show_locations():
     """Show local pickup locations"""
 
-    locations = db.session.query(Location).all()
+    pickups = db.session.query(Pickup).filter(Pickup.pickup_id > 1).all()
 
-    return render_template("locations.html", locations=locations)
+    return render_template("locations.html", pickups=pickups)
 
 @app.route('/cart')
 def show_cart():
@@ -305,23 +313,22 @@ def get_customer_json():
 
         return jsonify(customer_id=None, email=None)
 
-@app.route('/locations.json')
-def get_locations_json():
+@app.route('/pickups.json')
+def get_pickups_json():
     """Provide JSON for pickup locations"""
 
-    locations_json = {"locations": {}, "ids": []}
-    locations = Location.query.filter(Location.vendor_id > 0).all()
+    pickup_json = {"locations": {}, "ids": []}
+    pickups = Pickup.query.filter(Pickup.pickup_id > 1).all()
 
-    for location in locations:
-        locations_json["locations"][location.name] = {"id": location.vendor_id,
-                                                 "name": location.name,
-                                                 "description": location.description,
-                                                 "address": location.street_address,
-                                                 "zipcode": location.zipcode}
-        locations_json["ids"].append(location.name)
+    for pickup in pickups:
+        pickup_json["locations"][pickup.name] = {"id": pickup.pickup_id,
+                                                 "name": pickup.name,
+                                                 "description": pickup.description,
+                                                 "address": pickup.street_address,
+                                                 "zipcode": pickup.zipcode}
+        pickup_json["ids"].append(pickup.name)
 
-    return jsonify(**locations_json)
-
+    return jsonify(**pickup_json)
 
 @app.route('/checkout')
 def check_out():
