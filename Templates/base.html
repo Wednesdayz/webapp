@@ -43,8 +43,8 @@
             <li><a href="/locations">Locations</a></li>
             <li><a href="/products">Products</a></li>
             {% if 'email' in session %}
-            <li><a href="/account">Account</a></li>
-            <li><a href="/logout">Log Out</a></li>
+              <li><a href="/account">Account</a></li>
+              <li><a href="/logout">Log Out</a></li>
             {% else %}
             <li><a href="" data-toggle="modal" data-target="#LoginModal" id="loginNav">Login</a></li>
             {% endif %}
@@ -71,6 +71,7 @@
                 <input type="password" name="password" id="password" required>
                 <p id="login-fail"></p>
                 <p>Not a member? <a href="/register">Register now!</a></p>
+                <p>Forgot password? <a href="/forgot_password">Forgot password</a></p>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 <button type="button submit" form="login" class="btn btn-primary">Enter</button>
             </form>

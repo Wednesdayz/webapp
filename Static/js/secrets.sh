@@ -1,0 +1,7 @@
+export EDAMAM="Bbklct321"
+export EDAMAM_KEY="Bbklct321"
+export STRIPE_TEST_SECRET="Bbklct321"
+export STRIPE_TEST_PUBLISHABLE="Bbklct321"
+export STRIPE_LIVE_SECRET="Bbklct321"
+export STRIPE_LIVE_PUBLISHABLE="Bbklct321"
+export GOOGLE_MAPS_KEY="AIzaSyCU64VlRPYzacss3wP3addN3uJ6yXoUv60"

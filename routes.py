@@ -28,7 +28,7 @@ def homepage():
 def show_login():
     """Show login form"""
 
-    pass
+    return render_template("homepage.html")
 
 @app.route('/login', methods=['POST'])
 def process_login():
@@ -75,6 +75,51 @@ def show_forgot_password():
 
     return render_template("forgot_password.html")
 
+@app.route('/forgot_password', methods=['POST'])
+def process_forgot_password():
+    email = request.form.get("email")
+    phone = request.form.get("phone")
+    country = request.form.get("country")
+
+    user = db.session.query(Customer).filter(Customer.email == email).first()
+
+    if not user:
+        flash("email does not exist in our database")
+    elif user.phone == phone and user.country == country:
+        print(user)
+        return render_template("reset_password.html", customer=user)
+    elif(user.phone is not phone):
+        flash("Phone number given does not match email given")
+    elif(user.country is not country):
+        flash("Country does not match database credentials")
+    
+    print("hello")
+    
+    #passing by json
+
+    return render_template("forgot_password.html")
+
+@app.route('/reset_password')
+def show_reset_password():
+    """show rest password form"""
+    
+    return redirect("reset_password.html")
+
+@app.route('/reset_password', methods=['GET','POST'])
+def process_reset_password():
+    password = request.form.get("password")
+    confirm_password = request.form.get("confirm_password")
+    print(customer)
+    if password is confirm_password:
+        password = pbkdf2_sha256.encrypt(password, rounds=20000, salt_size=16)
+        customer.password_hash = password
+        flash("account password has been reset, please login again")
+        return render_template("homepage.html")
+    else:
+        flash("passwords did not match, please try again")
+        return render_template("reset_password.html", customer=customer)
+
+
 @app.route('/register', methods=['POST'])
 def process_registration():
     """Process user registration"""
@@ -111,7 +156,6 @@ def show_account():
 
     return render_template("account.html", customer=customer)
 
-    
 @app.route('/products')
 def filter_products():
     """Allow customers to filter products"""
@@ -126,9 +170,10 @@ def show_search_results():
 
     categories = db.session.query(Product.category).group_by(Product.category).all()
     products = db.session.query(Product).filter(Product.name.like('%' + terms + '%')).all()
-    print(products)
 
     return render_template("products.html", products=products, categories=categories)
+
+
 
 @app.route('/filters.json')
 def serve_filtered_products_json():
@@ -213,9 +258,8 @@ def add_to_cart_from_ng():
     session.modified = True
 
     if product_id:
-        return "Success!"
-    else:
-        return "Missing product id"
+        return "Success!" 
+    return "Missing product id"
 
 
 @app.route('/update-cart', methods=['POST'])
@@ -308,10 +352,15 @@ def get_customer_json():
 
         customer = db.session.query(Customer).filter(Customer.email == session['email']).first()
 
-        return jsonify(customer_id=customer.user_id, email=customer.email)
+        return jsonify(customer_id=customer.user_id, email=customer.email,
+                       street_address=customer.street_address, zipcode=customer.zipcode,
+                       state=customer.state)
     else:
 
-        return jsonify(customer_id=None, email=None)
+        return jsonify(customer_id=None, email=None,
+                       street_address=None, zipcode=None,
+                       state=None)
+
 
 @app.route('/pickups.json')
 def get_pickups_json():

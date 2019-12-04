@@ -10,7 +10,7 @@
         $http.get("/filters.json", {"filters": $scope.prods.filters}).then( function(response) {
             $scope.prods.filtered_prods = response.data.products;
             $scope.prods.categories = response.data.categories;
-            // console.log($scope.prods);
+            console.log($scope.prods);
         });
 
         $scope.toggleFilter = function(category) {
@@ -33,7 +33,7 @@
         $scope.addToCart = function(productId) {
             $http.post("/add-item", {"product_id": productId}).then(function(response) {
                 console.log(response);
-                // alert("Added item to cart!");
+                alert("Added item to cart!");
             });
         };
 

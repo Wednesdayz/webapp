@@ -24,7 +24,7 @@ def pay_for_cart():
     placed_at = arrow.utcnow()
     print ("placed at ", placed_at)
     customer = db.session.query(Customer).filter(Customer.email == session['email']).one()
-    print ("customer ", customer())
+    print ("customer", customer)
     order = Order(customer_id=customer.user_id, placed_at=placed_at, total=session["cart_total"], pickup_id=1)  # change pickup!!!
 
     print ("order = ", order)
