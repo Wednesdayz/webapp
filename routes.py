@@ -1,6 +1,8 @@
 from order import Orders, PiggyBackOrder
 from Item import Item, food, meal, drinks
 from flask import Flask, render_template, redirect, request, flash, abort, session, jsonify
+from flask_mail import Mail, Message
+import os
 from jinja2 import StrictUndefined
 from model import *
 import api
@@ -8,9 +10,21 @@ from math import floor
 import functions
 from passlib.hash import pbkdf2_sha256
 
+
+
 app = Flask(__name__)
 app.secret_key = 'Bbklct321'
 
+mail_settings = {
+    "MAIL_SERVER": 'smtp.gmail.com',
+    "MAIL_PORT": 465,
+    "MAIL_USE_TLS": False,
+    "MAIL_USE_SSL": True,
+    "MAIL_USERNAME": 'jason.z.m.wen',
+    "MAIL_PASSWORD": 'Ooblookoo21'
+}
+app.config.update(mail_settings)
+mail = Mail(app)
 
 #For debugging - see Jinja fails
 app.jinja_env.undefined = StrictUndefined
@@ -44,14 +58,36 @@ def process_login():
         session['email'] = email
         if session.get('email'):
             flash("Login successful!")
-            return "Success"
+            return "Success"    
         else:
             return "CookieFail"
 
     else:
 
         return "Fail"
-    
+
+@app.route('/Not_logged_acc', methods=['POST'])
+def process_Notlogged():
+    """Process login data. Add user_id to session"""
+
+    email = request.form.get('email')
+    password = request.form.get('password')
+
+    user = db.session.query(Customer).filter(Customer.email == email).first()
+
+    if user and pbkdf2_sha256.verify(password, user.password_hash):
+
+        session['email'] = email
+        if session.get('email'):
+            flash("Login successful!")
+            return render_template('account.html', customer=user)   
+        else:
+            flash('Cookie Fail')
+            return render_template('Not_loggedin.html')
+
+    else:
+        flash('The email and/or password is wrong')
+        return render_template('Not_loggedin.html')
 
 @app.route('/logout')
 def process_logout():
@@ -62,12 +98,6 @@ def process_logout():
     flash("You have been logged out.")
 
     return redirect("/")
-
-@app.route('/register')
-def show_register():
-    """Show registration form"""
-
-    return render_template("register.html")
 
 @app.route('/forgot_password')
 def show_forgot_password():
@@ -103,7 +133,9 @@ def process_forgot_password():
 def show_reset_password():
     """show rest password form"""
     
-    return redirect("reset_password.html")
+    return render_template("reset_password.html")
+
+
 
 @app.route('/reset_password', methods=['GET','POST'])
 def process_reset_password():
@@ -119,6 +151,11 @@ def process_reset_password():
         flash("passwords did not match, please try again")
         return render_template("reset_password.html", customer=customer)
 
+@app.route('/register')
+def show_register():
+    """Show registration form"""
+
+    return render_template("register.html")
 
 @app.route('/register', methods=['POST'])
 def process_registration():
@@ -152,9 +189,11 @@ def process_registration():
 def show_account():
     """Show user's info, past orders"""
 
-    customer = db.session.query(Customer).filter(Customer.email == session['email']).one()  
-
-    return render_template("account.html", customer=customer)
+    if session.get('email'):
+        customer = db.session.query(Customer).filter(Customer.email == session['email']).one()  
+        return render_template("account.html", customer=customer)
+    else:
+        return render_template("Not_loggedin.html")
 
 @app.route('/products')
 def filter_products():
@@ -382,11 +421,35 @@ def get_pickups_json():
 @app.route('/checkout')
 def check_out():
     """Check out"""
+    if session.get('email'):
+        cart = Product.query.filter(Product.product_id.in_(session['cart'].keys())).all()
+        functions.get_cart_total(cart)
+        return render_template("checkout.html", cart=cart)
+    else:
+        return render_template("Not_loggedincart.html")
 
-    cart = Product.query.filter(Product.product_id.in_(session['cart'].keys())).all()
-    functions.get_cart_total(cart)
+@app.route('/Not_loggedincart', methods=['POST'])
+def process_Notloggedincart():
+    """Process login data. Add user_id to session"""
 
-    return render_template("checkout.html", cart=cart)
+    email = request.form.get('email')
+    password = request.form.get('password')
+
+    user = db.session.query(Customer).filter(Customer.email == email).first()
+
+    if user and pbkdf2_sha256.verify(password, user.password_hash):
+
+        session['email'] = email
+        if session.get('email'):
+            flash("Login successful!")
+            return render_template('cart.html')   
+        else:
+            flash('Cookie Fail')
+            return render_template('Not_loggedincart.html')
+
+    else:
+        flash('The email and/or password is wrong')
+        return render_template('Not_loggedincart.html')
 
 @app.route('/checkout', methods=['POST'])
 def process_payment():
@@ -394,17 +457,59 @@ def process_payment():
 
     cart = Product.query.filter(Product.product_id.in_(session['cart'].keys())).all()
     functions.get_cart_total(cart)
-
     api.pay_for_cart()
+    
 
     return render_template("success.html")
 
+@app.route('/order/<int:order_id>')  # takes account_id as an INTEGER
+def show_order_page(order_id):
+    """Query database for product info and display results"""
+    
+    product_list = []
+    orders = db.session.query(Order_Quantity).filter(Order_Quantity.order_id == order_id).all()
+    MyOrder = Order.query.get(order_id)
+    print(orders)
+    customer = Customer.query.get(MyOrder.customer_id)
+    if session.get('email') != customer.email:
+        return render_template('404.html')
 
+    for i in orders:
+        product_list.append(Product.query.get(i.product_id))
+
+    return render_template("order.html", products=product_list, orders=MyOrder, order_qty=orders)
+
+@app.route('/contacts') #contact us page
+def show_contact_us():
+    return render_template('contacts.html')
+
+#process contact form
+@app.route('/contacts', methods=['POST'])
+def process_email():
+
+    email = request.form.get('email')
+    first_name = request.form.get('firstname')
+    last_name = request.form.get('lastname')
+    country = request.form.get('country')
+    subject = request.form.get('subject')
+
+    with app.app_context():
+        email_list = []
+        email_list.append('jason.z.m.wen@hotmail.com')
+        msg = Message(subject="Hello",
+                        sender=app.config.get("MAIL_USERNAME"),
+                        recipients=email_list, # replace with your email for testing
+                        body="Email sent by: {} {}, from: {}, {} Via email: {}".format(first_name, last_name, country, subject, email)
+        )
+        mail.send(msg) 
+    
+    flash('Email Sent')
+    return redirect('/account')
 
 @app.errorhandler(404)
 def page_not_found(e):
     """Custom 404 page"""
-
+    
     return render_template('404.html'), 404
 
 if __name__ == "__main__":

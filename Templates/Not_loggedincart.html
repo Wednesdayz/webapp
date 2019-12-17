@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<h1>Sorry! Please Log In or Sign-Up</h1>
+
+
+  <form action="/Not_loggedincart" method="POST">
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" required>
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" required>
+      <p id="login-fail"></p>
+      <p>Not a member? <a href="/register">Register now!</a></p>
+      <p>Forgot password? <a href="/forgot_password">Forgot password</a></p>
+      <input type="submit" value="Enter">  
+  </form>
+  
+{% endblock %}

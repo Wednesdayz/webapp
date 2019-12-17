@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<h1><center>Order Details</center></h1>
+<div class="col-md-20">
+
+    <table class="table table-hover">
+            <tr>
+                <th>Order number</th> 
+                <th>Date</th>
+                <th>Total</th>
+                <th>Received at</th>
+            </tr>
+        
+    {% if orders %}
+    
+        <tr>
+            <td>{{ orders.order_id }}</td>
+            <td>{{ orders.placed_at.strftime('%Y-%m-%d') }}</td>
+            <td>{{ "$%.2f"|format(orders.total) }}</td>
+            <td>{{ orders.received_at}}</td>
+        </tr>
+    
+    {% endif %}
+    </table>
+</div>
+
+<div class="col-md-25 proddiv">
+
+    <table class="table table-hover">
+            <tr>
+                <th>Items</th> 
+                <th>Item quantities</th>
+                <th>Item Price</th>
+                <th>Item Price now</th>
+            </tr>
+
+    {% if products %}
+        {%for product in products%}
+            <tr>
+                <td>{{product.name}}<a href="/products/{{ product.product_id }}"><img src="{{ product.img }}"></a><div class="proddetails"><p>${{ product.price }} <span class="spacerbull">&#47;</span>{{ product.weight }}{{ product.unit }}</div></td>
+                
+                {%for o in order_qty%}
+                    {%if o.product_id == product.product_id%}
+                    <td>{{o.product_qty}}</td>
+                    <td>{{o.product_price}}</td>
+                    {%endif%}
+                {%endfor%}
+                <td>{{product.price}}</td>
+            </tr>
+        {%endfor%}
+    {% endif %}
+    </table>
+</div>
+
+<div class="container">
+    <div style="text-align:center">
+      <h2>Contact Us</h2>
+      <p>Give us a call or leave us a message:</p>
+    </div>
+    <div class="row">
+      <div class="column">
+        <img src="/static/trollface.jpg" style="width:100%">
+      </div>
+      <div class="column">
+        <form action="/contacts" id="contacts_form" method="POST">
+            <label for="email">Email</label>
+            <input type="text" id="email_contact" name="email" placeholder="Your email..">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" name="firstname" placeholder="Your name..">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" name="lastname" placeholder="Your last name..">
+            <label for="country">Country</label>
+            <select id="country" name="country">
+            <option value="australia">Australia</option>
+            <option value="canada">Canada</option>
+            <option value="usa">USA</option>
+            </select>
+            <label for="subject">Subject</label>
+            <textarea id="subject" name="subject" placeholder="Write something.." style="height:170px"></textarea>
+            <input type="submit" value="Submit">
+        </form>
+        </div>
+    </div>
+</div>
+
+
+  
+
+{% endblock %}

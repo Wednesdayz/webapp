@@ -26,15 +26,19 @@ def pay_for_cart():
     customer = db.session.query(Customer).filter(Customer.email == session['email']).one()
     print ("customer", customer)
     order = Order(customer_id=customer.user_id, placed_at=placed_at, total=session["cart_total"], pickup_id=1)  # change pickup!!!
-
     print ("order = ", order)
     db.session.add(order)
     print ("added order")
-    db.session.commit()
     print ("committed order")
-
+    db.session.commit()
     order_id = db.session.query(Order.order_id).filter(Order.customer_id == customer.user_id,
                                                        Order.placed_at == placed_at).one()
+    cart = Product.query.filter(Product.product_id.in_(session['cart'].keys())).all()
+    for p in cart:
+        OQ = Order_Quantity(product_id=p.product_id, product_qty=session['cart'][str(p.product_id)], order_id=order_id, product_price=p.price)
+        db.session.add(OQ)
+    db.session.commit()
+    
     print (order_id, " is the order_id!!!!!!!!!!!!")
 
     token = request.form.get('stripeToken')

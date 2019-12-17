@@ -22,7 +22,7 @@ class Customer(db.Model):
     phone = db.Column(db.String(30), nullable=True)
     country = db.Column(db.String(500), nullable=False)
 
-    orders = db.relationship("Order", backref="customer")
+    orders = db.relationship("Order", backref="customers")
 
     def __repr__(self):
 
@@ -94,9 +94,9 @@ class Product(db.Model):
                            secondary="product_tags",
                            backref="products")
 
-    delivery_qty = db.relationship("Delivery_Quantity", backref="product")
+    delivery_qty = db.relationship("Delivery_Quantity", backref="products")
 
-    order_qty = db.relationship("Order_Quantity", backref="product")
+    order_qty = db.relationship("Order_Quantity", backref="products")
 
     def __repr__(self):
 
@@ -147,7 +147,7 @@ class Order(db.Model):
 
     pickup = db.relationship("Pickup", backref="orders")
 
-    quantities = db.relationship("Order_Quantity", backref="order")
+    quantities = db.relationship("Order_Quantity", backref="orders")
 
     def __repr__(self):
 
@@ -166,6 +166,7 @@ class Order_Quantity(db.Model):
     order_qty_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey("products.product_id"), nullable=False)
     product_qty = db.Column(db.Integer, nullable=False, default=1)
+    product_price = db.Column(db.Numeric(asdecimal=False), nullable=False) 
     order_id = db.Column(db.Integer, db.ForeignKey("orders.order_id"), nullable=False)
 
     def __repr__(self):
@@ -184,7 +185,7 @@ class Delivery(db.Model):
     vendor = db.Column(db.String(500), nullable=True)
     received_at = db.Column(ArrowType, nullable=False)  # or db.DateTime v. db.TimeStamp?
 
-    quantities = db.relationship("Delivery_Quantity", backref="delivery")
+    quantities = db.relationship("Delivery_Quantity", backref="deliveries")
 
     def __repr__(self):
 
@@ -213,8 +214,8 @@ class Delivery_Quantity(db.Model):
 
 def example_data():
     """Populate test database"""
-    product = Product(name="Organic Blackberries", description="Sweet and tart, these delicious blackberries are the perfect fall fruit.",
-                      weight=6, unit="oz", price_per=3.99, price=3.99, per_unit="oz", aisle="Produce",
+    product = Product(name="Organic", description="Sweet and tart, these delicious blackberries are the perfect fall fruit.",
+                      weight=6, unit="kg", price_per=3.99, price=3.99, per_unit="kg", aisle="Produce",
                       category="New & Peak Season", img="http://goodeggs2.imgix.net/product_photos/NmgHoSgSqmShNF10cLni_blackberries_01.jpg?w=380&h=238&fm=jpg&q=41&fit=crop",
                       icon_id=1)
     product2 = Product(name="Janet Cheese", description="Blue and mouldy",img="https://cdn.apartmenttherapy.info/image/fetch/f_auto,q_auto:eco,c_fit,w_1460/https%3A%2F%2Fstorage.googleapis.com%2Fgen-atmedia%2F3%2F2008%2F12%2F56c4f925b8e57c5babe1a0a8497a03141b2045cc.jpeg?", weight=12, unit="oz", price_per=150, price=150, per_unit="oz", aisle="Processed",

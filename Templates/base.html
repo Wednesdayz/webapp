@@ -11,7 +11,7 @@
     {% block head %}{% endblock %}
 </head>
 <body>
-
+  <div id="container">
     <!--Navigation code adapted from Bootstrap example-->
     <nav class="navbar navbar-default">
       <div class="container-fluid">
@@ -42,8 +42,9 @@
             </form>
             <li><a href="/locations">Locations</a></li>
             <li><a href="/products">Products</a></li>
+            <li><a href="/account">Account</a></li>
+            <li><a href="/contacts">Contact Us</a></li>
             {% if 'email' in session %}
-              <li><a href="/account">Account</a></li>
               <li><a href="/logout">Log Out</a></li>
             {% else %}
             <li><a href="" data-toggle="modal" data-target="#LoginModal" id="loginNav">Login</a></li>
@@ -71,7 +72,7 @@
                 <input type="password" name="password" id="password" required>
                 <p id="login-fail"></p>
                 <p>Not a member? <a href="/register">Register now!</a></p>
-                <p>Forgot password? <a href="/forgot_password">Forgot password</a></p>
+                <p><em>Forgot your password? </em><a href="/reset">Reset!!</a></p>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 <button type="button submit" form="login" class="btn btn-primary">Enter</button>
             </form>
@@ -129,11 +130,20 @@
     
     {% endfor %}
     
+    </div> 
     </div>
+    {% endblock %}
     </div>
-        {% endblock %}
-
-
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-</body>
+<footer>
+  <nav>
+    <ul id='list'>
+        <li><a href="contacts.html"> Contact Us</a></li>
+        <li><a href="/locations">Locations</a></li>
+        <li><a href="/products">Products</a></li>
+        <li><a href="/account">Account</a></li>
+      </ul>    
+  </nav>
+</footer> 
+</body> 
 </html>

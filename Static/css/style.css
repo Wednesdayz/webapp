@@ -9,8 +9,8 @@ h1 {
 /* Nav styles */
 
 .farmlogo {
-    /*max-height:20px;*/
-    /*margin-bottom: 15px;*/
+    max-height:30px;
+    margin-bottom: 15px;
 }
 
 .navbar {
@@ -37,8 +37,10 @@ h1 {
 }
 
 body {
-    font-family: 'Droid Serif', serif;
-}
+    min-height: 400px;
+    margin-bottom: 100px;
+    clear: both;
+ }
 
 /* All Product Page */
 
@@ -55,8 +57,10 @@ body {
 
 .proddiv img {
     width: 380px;
+    height: 300px;
+    overflow: hidden;
     margin: auto;
-    display: block;
+    display: grid;
     position: relative;
 }
 
@@ -170,34 +174,6 @@ input[type=checkbox], input[type=radio] {
     margin-right: 5px;
 }
 
-.recipetitle {
-    font-family: 'Lato', sans-serif;
-    text-transform: uppercase;
-    color: #777;
-    text-align: center;
-    font-size: 18px;
-}
-
-.likerecipe {
-    border: solid 1px #e7e7e7;
-    width: 36px;
-    text-align: center;
-    padding: 8px;
-    border-radius: 35px;
-    display: block;
-    margin: auto;
-    color: #069c29;
-    text-decoration: none;
-}
-
-.likerecipe:hover {
-    background-color: #cbd9a3;
-}
-
-a.recipea:hover, a.recipea:visited, a.recipea:active   {
-    text-decoration: none;
-}
-
 .centerme {
     text-align: center;
 }
@@ -219,10 +195,87 @@ a.recipea:hover, a.recipea:visited, a.recipea:active   {
         height: 400px;
 }
 
-#footer {
-        position:absolute;
-        bottom:0;
-        width:100%;
-        height:60px;   /* Height of the footer */
-        background:#6cf;
+#container {
+    min-height:100%;
+    position:relative;
+ }
+
+#body{
+    position: relative ;
 }
+
+footer{
+    position: fixed;
+    text-align: center;
+    bottom:0px;
+    left:0px;
+    width:100%;
+    background:orange;
+}
+
+#list li{
+    list-style: none;
+    color: green;
+}
+
+* {
+    box-sizing: border-box;
+  }
+  
+  /* Style inputs */
+  input[type=text], textarea {
+    padding: 5px;
+    border: 1px solid #ccc;
+    resize: vertical;
+  }
+
+  #fname, #lname, #email_contact, #country, #subject {
+    width: 100%;
+    padding: 15px;
+    margin: auto;
+    border: 1px solid #ccc;
+    resize: vertical;
+  }
+  
+  input[type=submit] {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }
+  
+  /* Style the container/contact section */
+  .container {
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 10px;
+  }
+  
+  /* Create two columns that float next to eachother */
+  .column {
+    float: left;
+    width: 50%;
+    margin-top: 6px;
+    padding: 20px;
+  }
+  
+  /* Clear floats after the columns */
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  
+  /* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other instead of next to each other */
+  @media screen and (max-width: 600px) {
+    .column, input[type=submit] {
+      width: 100%;
+      margin-top: 0;
+    }
+}
+  

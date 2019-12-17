@@ -15,6 +15,7 @@ function validateUser(evt) {
         } else {
             $('#LoginModal').modal('hide');
             $('#loginNav').attr('src', '/logout').html('Log Out');
+            location.reload();
         }
     })
 

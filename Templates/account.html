@@ -19,7 +19,7 @@
 
 <table class="table table-hover">
     <tr>
-        <th>Order #</th>
+        <th>Order number</th> 
         <th>Date</th>
         <th>Total</th>
     </tr>
@@ -27,7 +27,7 @@
 {% for order in customer.orders %}
 
     <tr>
-        <td>{{ order.order_id }}</td>
+        <td><a href="/order/{{order.order_id}}"> {{ order.order_id }}</a></td>
         <td>{{ order.placed_at.strftime('%Y-%m-%d') }}</td>
         <td>{{ "$%.2f"|format(order.total) }}</td>
     </tr>
